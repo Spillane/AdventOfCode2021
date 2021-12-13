@@ -5,13 +5,13 @@ var args = process.argv.slice(2);
 const lines = fs.readFileSync(args[0], 'utf8').trim().split('\n');
 
 const pointMap = {
-  ')': 3,
-  ']': 57,
-  '}': 1197,
-  '>': 25137,
+  ')': 1,
+  ']': 2,
+  '}': 3,
+  '>': 4,
 };
 
-let pointTotal = 0;
+const lineScores = [];
 for(let row = 0; row < lines.length; row++) {
   const line = lines[row];
   const tracker = {
@@ -20,21 +20,16 @@ for(let row = 0; row < lines.length; row++) {
     '>': 0,
     ')': 0,
     openList: [],
-    closeList: [],
     mismatchFlag: false,
   };
 
-  const close = function(char, tracker, pointTotal, pointMap) {
+  const close = function(char, tracker) {
     tracker[char]--;
     if(tracker.openList[tracker.openList.length - 1] !== char) {
-      pointTotal += pointMap[char];
       tracker.mismatchFlag = true;
-      console.log('Adding', pointMap[char], 'for', char);
-      console.log('Mismatch expected', tracker.openList[tracker.openList.length - 1], 'but recieved', char);
     } else {
       tracker.openList.pop();
     }
-    return pointTotal;
   };
 
   const open = function(char, tracker) {
@@ -50,36 +45,53 @@ for(let row = 0; row < lines.length; row++) {
         open('}', tracker)
         break;
       case '}':
-        pointTotal = close('}', tracker, pointTotal, pointMap);
+        close('}', tracker);
         break;
       case '[':
         open(']', tracker)
         break;
       case ']':
-        pointTotal = close(']', tracker, pointTotal, pointMap);
+        close(']', tracker);
         break;
       case '<':
         open('>', tracker)
         break;
       case '>':
-        pointTotal = close('>', tracker, pointTotal, pointMap);
+        close('>', tracker);
         break;
       case '(':
         open(')', tracker)
         break;
       case ')':
-        pointTotal = close(')', tracker, pointTotal, pointMap);
+        close(')', tracker);
         break;
       default:
         break;
     }
 
     if(tracker.mismatchFlag) {
+      // Ignore line
       break;
     };
   };
 
-  console.log('end of line');
+  let lineScore = 0;
+  if(!tracker.mismatchFlag) {
+    tracker.openList.reverse();
+    tracker.openList.forEach(char => {
+      lineScore *= 5;
+      lineScore += pointMap[char];
+    });
+    lineScores.push(lineScore);
+  };
 };
 
-console.log('Answer:', pointTotal);
+const midPoint = Math.ceil(lineScores.length/2) - 1;
+lineScores.sort((a, b) => a - b)
+const middleScore = lineScores[midPoint];
+
+console.log('length', lineScores.length);
+console.log(lineScores)
+console.log(midPoint);
+console.log(middleScore);
+console.log('Answer:', middleScore);
